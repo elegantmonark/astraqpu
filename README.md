@@ -1,0 +1,53 @@
+# AstraQPU
+
+A virtual QPU runtime for architecture-aware scheduling, control, and hardware-in-the-loop execution.
+
+AstraQPU prototypes the software architecture around how a quantum processor could be controlled, scheduled, debugged, and virtualized. The project focuses on runtime architecture, native instruction scheduling, hardware constraints, control-plane interaction, execution traces, and telemetry rather than generic circuit simulation.
+
+## Project Shape
+
+AstraQPU is organized around a host runtime and a physical mock control unit:
+
+```text
+program input -> IR -> architecture model -> scheduler -> runtime backend -> trace
+                                                             |
+                                                             +-> virtual backend
+                                                             +-> serial MCU backend
+```
+
+The initial backend is virtual. The next backend is an Arduino/ESP32 control unit that accepts scheduled instructions over serial and emulates timing triggers, calibration registers, measurement latency, fault flags, and telemetry.
+
+## Naming System
+
+- **AstraQPU**: project and runtime
+- **Sutra**: instruction stream / IR
+- **Yantra**: hardware abstraction layer
+- **Niyantra**: scheduler and control runtime
+- **Akasha**: virtual backend
+- **Tejas**: telemetry engine
+
+## Quick Start
+
+From this repository:
+
+```bash
+python -m astraqpu.cli validate examples/arch/tiny_3q.json
+python -m astraqpu.cli compile examples/bell.aqis --arch examples/arch/tiny_3q.json --out build/bell.scheduled.json
+python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend virtual
+```
+
+## MVP Scope
+
+The first milestone proves that AstraQPU can:
+
+- load a virtual QPU architecture specification
+- parse a small low-level QPU instruction stream
+- validate native gates and topology constraints
+- schedule instructions under qubit/channel timing constraints
+- emit a machine-readable execution trace
+- prepare the same scheduled stream for a future serial MCU backend
+
+## Status
+
+Early architecture/runtime foundation. The current focus is a narrow but real execution path: QPU architecture spec -> instruction parser -> scheduler -> virtual execution trace.
+

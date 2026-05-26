@@ -1,0 +1,83 @@
+{
+  "name": "tiny_3q_superconducting_mock",
+  "clock": {
+    "tick_ns": 10
+  },
+  "qubits": {
+    "q0": {
+      "t1_us": 80,
+      "t2_us": 60,
+      "readout_error": 0.025
+    },
+    "q1": {
+      "t1_us": 75,
+      "t2_us": 55,
+      "readout_error": 0.03
+    },
+    "q2": {
+      "t1_us": 90,
+      "t2_us": 70,
+      "readout_error": 0.02
+    }
+  },
+  "topology": {
+    "couplings": [
+      ["q0", "q1"],
+      ["q1", "q2"]
+    ]
+  },
+  "native_gates": {
+    "prep": {
+      "duration_ns": 20,
+      "channels": ["drive:{q}"],
+      "error": 0.0005
+    },
+    "h": {
+      "duration_ns": 40,
+      "channels": ["drive:{q}"],
+      "error": 0.001
+    },
+    "x": {
+      "duration_ns": 40,
+      "channels": ["drive:{q}"],
+      "error": 0.001
+    },
+    "sx": {
+      "duration_ns": 30,
+      "channels": ["drive:{q}"],
+      "error": 0.001
+    },
+    "rz": {
+      "duration_ns": 0,
+      "channels": [],
+      "virtual": true,
+      "error": 0.0
+    },
+    "cx": {
+      "duration_ns": 300,
+      "channels": ["drive:{q0}", "drive:{q1}", "coupler:{q0}:{q1}"],
+      "error": 0.012
+    },
+    "measure": {
+      "duration_ns": 1200,
+      "latency_ns": 5000,
+      "channels": ["readout:{q}"],
+      "error": 0.025
+    }
+  },
+  "calibration": {
+    "q0": {
+      "frequency_ghz": 5.01,
+      "drive_amp": 0.42
+    },
+    "q1": {
+      "frequency_ghz": 5.16,
+      "drive_amp": 0.39
+    },
+    "q2": {
+      "frequency_ghz": 4.98,
+      "drive_amp": 0.44
+    }
+  }
+}
+

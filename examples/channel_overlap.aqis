@@ -1,0 +1,15 @@
+# Independent one-qubit operations should be allowed to overlap when channels permit.
+DECLARE_QUBITS 3
+DECLARE_BITS 3
+
+PREP q0
+PREP q1
+PREP q2
+GATE X q0
+GATE X q1
+GATE X q2
+MEASURE q0 -> c0
+MEASURE q1 -> c1
+MEASURE q2 -> c2
+END
+

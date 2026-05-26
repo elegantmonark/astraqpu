@@ -1,0 +1,12 @@
+# Bell pair on a tiny architecture-aware QPU target.
+DECLARE_QUBITS 2
+DECLARE_BITS 2
+
+PREP q0
+PREP q1
+GATE H q0
+GATE CX q0 q1
+MEASURE q0 -> c0
+MEASURE q1 -> c1
+END
+
