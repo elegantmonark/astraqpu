@@ -34,6 +34,7 @@ From this repository:
 python -m astraqpu.cli validate examples/arch/tiny_3q.json
 python -m astraqpu.cli compile examples/bell.aqis --arch examples/arch/tiny_3q.json --out build/bell.scheduled.json
 python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend virtual
+python -m astraqpu.cli serial-dump examples/bell.aqis --arch examples/arch/tiny_3q.json --job-id bell_001
 ```
 
 ## MVP Scope
@@ -46,8 +47,8 @@ The first milestone proves that AstraQPU can:
 - schedule instructions under qubit/channel timing constraints
 - emit a machine-readable execution trace
 - prepare the same scheduled stream for a future serial MCU backend
+- emit JSON Lines control-plane traffic for an Arduino/ESP32-backed control unit
 
 ## Status
 
 Early architecture/runtime foundation. The current focus is a narrow but real execution path: QPU architecture spec -> instruction parser -> scheduler -> virtual execution trace.
-

@@ -1,0 +1,368 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{longtable}
+\usepackage{titlesec}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black,
+  citecolor=blue!50!black
+}
+
+\lstdefinestyle{astra}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  showstringspaces=false,
+  tabsize=2
+}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.8em}{}
+
+\title{\textbf{AstraQPU}\\
+\large A Virtual QPU Runtime for Architecture-Aware Scheduling, Control, and Hardware-in-the-Loop Execution}
+\author{Project Development Report}
+\date{Initial development record: May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+AstraQPU is a full-stack quantum systems software project focused on the runtime architecture around quantum processor control. The project models a quantum processing unit as a constrained hardware target with native instructions, timing rules, control channels, readout latency, calibration state, execution traces, and hardware-in-the-loop control. This report tracks the project concept, design decisions, implemented components, verification steps, and near-term roadmap.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Project Intent}
+
+The central objective of AstraQPU is to prototype the software architecture around how a quantum processor could be controlled, scheduled, debugged, and virtualized. The project is intentionally positioned as quantum systems infrastructure rather than a classroom circuit simulator.
+
+\subsection{Public Positioning}
+
+\begin{quote}
+AstraQPU is a virtual QPU runtime for architecture-aware scheduling, control, and hardware-in-the-loop execution.
+\end{quote}
+
+The project message is:
+
+\begin{quote}
+I am building the software architecture around how a quantum processor could be controlled, scheduled, debugged, and virtualized.
+\end{quote}
+
+\subsection{Design Boundary}
+
+AstraQPU does not begin with state-vector simulation as the main identity. Instead, it begins with the software stack that would exist around a QPU:
+
+\begin{itemize}[leftmargin=*]
+  \item instruction ingestion and validation
+  \item architecture specification
+  \item native operation scheduling
+  \item hardware constraints
+  \item control-plane communication
+  \item timing traces
+  \item telemetry and fault reporting
+  \item future dashboard and debugging tools
+\end{itemize}
+
+\section{Name and Component Language}
+
+The selected project name is \textbf{AstraQPU}. The name combines a Sanskrit-derived root with a direct technical suffix. The internal naming system is:
+
+\begin{longtable}{lll}
+\toprule
+Name & Role & Meaning in the Project \\
+\midrule
+AstraQPU & Main project & Virtual QPU runtime and architecture platform \\
+Sutra & Instruction stream / IR & A structured thread of executable operations \\
+Yantra & HAL / hardware control & Instrumentation and control mechanism \\
+Niyantra & Scheduler / runtime control & Regulation, timing, and execution governance \\
+Akasha & Virtual backend & Abstract execution space \\
+Tejas & Telemetry engine & Signals, status, and device observability \\
+\bottomrule
+\end{longtable}
+
+\section{Architecture Overview}
+
+The first implementation follows a timing-first runtime pipeline:
+
+\begin{lstlisting}[style=astra]
+Sutra instruction stream
+  -> AstraQPU IR
+  -> architecture validation
+  -> constraint-aware scheduler
+  -> backend execution
+  -> execution trace
+\end{lstlisting}
+
+\subsection{Runtime Layers}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Frontend}: parses a low-level Sutra instruction stream.
+  \item \textbf{IR}: represents operations, qubits, classical bits, waits, barriers, and register updates.
+  \item \textbf{Architecture model}: defines qubits, topology, native gates, durations, channels, readout latency, and calibration data.
+  \item \textbf{Scheduler}: assigns start times under qubit, channel, topology, and latency constraints.
+  \item \textbf{Backend}: executes scheduled streams through either a virtual backend or a serial MCU backend.
+  \item \textbf{Trace layer}: records machine-readable execution events.
+\end{enumerate}
+
+\section{Repository Structure}
+
+The initial repository layout is:
+
+\begin{lstlisting}[style=astra]
+astraqpu/
+  astraqpu/
+    arch/
+    backends/
+    frontend/
+    ir/
+    protocol/
+    runtime/
+    scheduler/
+    cli.py
+  docs/
+    architecture.md
+    instruction-set.md
+    main.tex
+    qpu-architecture-spec.md
+    roadmap.md
+    serial-protocol.md
+  examples/
+    arch/
+    bell.aqis
+    channel_overlap.aqis
+  firmware/
+    arduino/
+    esp32/
+  tests/
+\end{lstlisting}
+
+\section{Implemented Development Steps}
+
+\subsection{Step 1: Project Foundation}
+
+The first development pass created a local Git repository under the project workspace and established a professional baseline:
+
+\begin{itemize}[leftmargin=*]
+  \item README with project positioning
+  \item MIT license
+  \item Python package metadata
+  \item line-ending normalization through \texttt{.gitattributes}
+  \item clean Git baseline on the \texttt{main} branch
+\end{itemize}
+
+\subsection{Step 2: Architecture Specification}
+
+A tiny 3-qubit superconducting-style mock target was added at:
+
+\begin{lstlisting}[style=astra]
+examples/arch/tiny_3q.json
+examples/arch/tiny_3q.yaml
+\end{lstlisting}
+
+The architecture specifies:
+
+\begin{itemize}[leftmargin=*]
+  \item clock tick size
+  \item qubit coherence metadata
+  \item physical couplings
+  \item native gates
+  \item gate durations
+  \item readout duration and latency
+  \item control channel templates
+  \item calibration values
+\end{itemize}
+
+\subsection{Step 3: Sutra Instruction Stream}
+
+The first instruction format supports:
+
+\begin{lstlisting}[style=astra]
+DECLARE_QUBITS n
+DECLARE_BITS n
+PREP q
+GATE name q...
+MEASURE q -> c
+WAIT duration
+BARRIER q...
+SET_REG name value
+END
+\end{lstlisting}
+
+An example Bell program was added:
+
+\begin{lstlisting}[style=astra]
+DECLARE_QUBITS 2
+DECLARE_BITS 2
+
+PREP q0
+PREP q1
+GATE H q0
+GATE CX q0 q1
+MEASURE q0 -> c0
+MEASURE q1 -> c1
+END
+\end{lstlisting}
+
+\subsection{Step 4: Constraint-Aware Scheduler}
+
+The scheduler currently enforces:
+
+\begin{itemize}[leftmargin=*]
+  \item declared qubits must exist in the architecture
+  \item native operations must exist in the architecture
+  \item two-qubit gates must follow the coupling topology
+  \item qubits cannot be reused before their previous operation and latency window ends
+  \item channels cannot be reused before their operation duration ends
+  \item explicit waits and barriers affect scheduling
+  \item operation durations are rounded to the architecture clock tick
+\end{itemize}
+
+\subsection{Step 5: Akasha Virtual Backend}
+
+The virtual backend converts a scheduled program into an execution trace with events such as:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{instruction\_start}
+  \item \texttt{instruction\_end}
+  \item \texttt{latency\_complete}
+\end{itemize}
+
+This provides the first runtime proof: AstraQPU can compile a low-level QPU instruction stream into a hardware-constrained timing trace.
+
+\subsection{Step 6: Yantra Serial Protocol}
+
+A JSON Lines serial protocol was introduced for hardware-in-the-loop control. The host emits:
+
+\begin{lstlisting}[style=astra]
+{"type":"HELLO","proto":"astraqpu.serial.v0","host":"astraqpu"}
+{"type":"LOAD","proto":"astraqpu.serial.v0","job_id":"bell_001","architecture":"tiny_3q_superconducting_mock","tick_ns":10,"instruction_count":6}
+{"type":"INST","proto":"astraqpu.serial.v0","job_id":"bell_001","id":1,"t_ns":0,"op":"prep","qubits":["q0"],"duration_ns":20,"latency_ns":0,"channels":["drive:q0"]}
+{"type":"RUN","proto":"astraqpu.serial.v0","job_id":"bell_001"}
+\end{lstlisting}
+
+The MCU is expected to return:
+
+\begin{lstlisting}[style=astra]
+{"type":"HELLO","proto":"astraqpu.serial.v0","device":"arduino","tick_ns":1000}
+{"type":"ACK","job_id":"bell_001","command":"LOAD"}
+{"type":"EVT","job_id":"bell_001","event":"instruction_start","id":1,"op":"prep","t_ns":0}
+{"type":"RESULT","job_id":"bell_001","bits":{}}
+{"type":"DONE","job_id":"bell_001"}
+\end{lstlisting}
+
+\subsection{Step 7: Arduino Control Unit}
+
+The Arduino firmware now implements a dependency-free protocol emulator. It accepts:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{HELLO}
+  \item \texttt{LOAD}
+  \item \texttt{INST}
+  \item \texttt{RUN}
+\end{itemize}
+
+It stores a fixed-size instruction buffer, emits ACK/NACK responses, emits timing events, and returns RESULT and DONE messages.
+
+\section{Command-Line Interface}
+
+The current CLI entry point is:
+
+\begin{lstlisting}[style=astra]
+python -m astraqpu.cli
+\end{lstlisting}
+
+Available workflows:
+
+\begin{lstlisting}[style=astra]
+python -m astraqpu.cli validate examples/arch/tiny_3q.json
+python -m astraqpu.cli compile examples/bell.aqis --arch examples/arch/tiny_3q.json --out build/bell.scheduled.json
+python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend virtual
+python -m astraqpu.cli serial-dump examples/bell.aqis --arch examples/arch/tiny_3q.json --job-id bell_001
+python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend serial --port COM5
+\end{lstlisting}
+
+\section{Verification}
+
+The current repository includes standard-library unit tests. No external test dependency is required.
+
+\begin{lstlisting}[style=astra]
+python -m unittest discover -s tests
+\end{lstlisting}
+
+The initial verified behaviors are:
+
+\begin{itemize}[leftmargin=*]
+  \item Sutra parsing
+  \item duration parsing
+  \item Bell program scheduling
+  \item readout latency handling
+  \item topology rejection for uncoupled two-qubit operations
+  \item virtual trace emission
+  \item serial JSON Lines generation and parsing
+\end{itemize}
+
+\section{Current Engineering Status}
+
+\begin{longtable}{lll}
+\toprule
+Area & Status & Notes \\
+\midrule
+Architecture spec & Implemented & JSON supported, YAML optional with PyYAML \\
+Sutra parser & Implemented & Low-level v0 instruction stream \\
+Scheduler & Implemented & Timing, topology, qubits, channels, latency \\
+Virtual backend & Implemented & Produces trace JSON \\
+Serial protocol & Implemented & JSON Lines host protocol and parser \\
+Serial backend & Implemented & Requires pyserial and a board port \\
+Arduino firmware & Initial implementation & Dependency-free protocol emulator \\
+ESP32 firmware & Planned & Recommended as primary v0.2 target \\
+Dashboard & Planned & Timeline and telemetry viewer later \\
+\bottomrule
+\end{longtable}
+
+\section{Next Milestones}
+
+\subsection{v0.2 Hardware-in-the-Loop Completion}
+
+\begin{itemize}[leftmargin=*]
+  \item test Arduino firmware on a physical board
+  \item confirm host serial run receives DONE and RESULT
+  \item add calibration register commands
+  \item add fault flag messages
+  \item improve MCU timing model on ESP32
+\end{itemize}
+
+\subsection{v0.3 Observability}
+
+\begin{itemize}[leftmargin=*]
+  \item generate channel occupancy timelines
+  \item generate simple HTML or web dashboard
+  \item compare scheduled trace against MCU-reported trace
+  \item record telemetry streams
+\end{itemize}
+
+\subsection{v0.4 Compiler Frontend}
+
+\begin{itemize}[leftmargin=*]
+  \item parse an OpenQASM subset
+  \item lower circuit-level gates to native gates
+  \item add mapping passes
+  \item add calibration-aware scheduling
+\end{itemize}
+
+\section{Conclusion}
+
+AstraQPU has been initialized as a serious quantum systems infrastructure project. The current codebase already demonstrates the core identity of the project: a QPU program can be parsed, checked against a hardware-inspired architecture, scheduled under timing and topology constraints, executed virtually, converted into a serial control stream, and prepared for physical microcontroller-backed execution.
+
+\end{document}
+

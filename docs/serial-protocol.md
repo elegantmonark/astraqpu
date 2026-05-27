@@ -6,8 +6,8 @@ The first hardware-in-the-loop backend will use JSON Lines over serial. This kee
 
 ```json
 {"type":"HELLO","proto":"astraqpu.serial.v0"}
-{"type":"LOAD","job_id":"bell_001","instruction_count":4}
-{"type":"INST","job_id":"bell_001","id":1,"t_ns":0,"op":"gate","gate":"h","qubits":["q0"],"duration_ns":40}
+{"type":"LOAD","proto":"astraqpu.serial.v0","job_id":"bell_001","architecture":"tiny_3q_superconducting_mock","tick_ns":10,"instruction_count":4}
+{"type":"INST","proto":"astraqpu.serial.v0","job_id":"bell_001","id":1,"t_ns":0,"op":"gate","gate":"h","qubits":["q0"],"duration_ns":40,"latency_ns":0,"channels":["drive:q0"]}
 {"type":"RUN","job_id":"bell_001"}
 ```
 
@@ -21,9 +21,28 @@ The first hardware-in-the-loop backend will use JSON Lines over serial. This kee
 {"type":"RESULT","job_id":"bell_001","bits":{"c0":1,"c1":1}}
 ```
 
+## Host CLI
+
+Print the exact JSON Lines stream without opening a serial port:
+
+```bash
+python -m astraqpu.cli serial-dump examples/bell.aqis --arch examples/arch/tiny_3q.json --job-id bell_001
+```
+
+Run against a board:
+
+```bash
+python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend serial --port COM5
+```
+
+The serial backend requires `pyserial`:
+
+```bash
+python -m pip install pyserial
+```
+
 ## Future Binary Frame
 
 ```text
 MAGIC | VERSION | TYPE | LENGTH | PAYLOAD | CRC32
 ```
-

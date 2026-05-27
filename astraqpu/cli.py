@@ -6,9 +6,10 @@ import json
 import sys
 
 from astraqpu.arch import load_architecture
-from astraqpu.backends import VirtualBackend
+from astraqpu.backends import SerialMCUBackend, VirtualBackend
 from astraqpu.errors import AstraQPUError
 from astraqpu.frontend import parse_sutra_file
+from astraqpu.protocol import SerialProtocol
 from astraqpu.scheduler import schedule_program
 
 
@@ -28,7 +29,16 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("program")
     run.add_argument("--arch", required=True)
     run.add_argument("--backend", choices=("virtual", "serial"), default="virtual")
+    run.add_argument("--port", help="serial port for --backend serial, for example COM5 or /dev/ttyUSB0")
+    run.add_argument("--baudrate", type=int, default=115200)
+    run.add_argument("--timeout", type=float, default=10.0)
+    run.add_argument("--job-id", default="job_001")
     run.add_argument("--out")
+
+    serial_dump = subparsers.add_parser("serial-dump", help="print JSON Lines that would be sent to a control unit")
+    serial_dump.add_argument("program")
+    serial_dump.add_argument("--arch", required=True)
+    serial_dump.add_argument("--job-id", default="job_001")
 
     args = parser.parse_args(argv)
 
@@ -45,10 +55,24 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "run":
             scheduled = _compile(args.program, args.arch)
-            if args.backend != "virtual":
-                raise AstraQPUError("serial backend is planned for v0.2; use --backend virtual")
-            trace = VirtualBackend().run(scheduled)
+            if args.backend == "virtual":
+                trace = VirtualBackend().run(scheduled)
+            else:
+                if not args.port:
+                    raise AstraQPUError("--backend serial requires --port")
+                trace = SerialMCUBackend(
+                    port=args.port,
+                    baudrate=args.baudrate,
+                    timeout_s=args.timeout,
+                    job_id=args.job_id,
+                ).run(scheduled)
             _emit_json(trace.to_dict(), args.out)
+            return 0
+
+        if args.command == "serial-dump":
+            scheduled = _compile(args.program, args.arch)
+            for line in SerialProtocol(job_id=args.job_id).host_lines(scheduled):
+                print(line.decode("utf-8"), end="")
             return 0
     except AstraQPUError as exc:
         print(f"astraqpu: error: {exc}", file=sys.stderr)
@@ -75,4 +99,3 @@ def _emit_json(data: dict, out: str | None) -> None:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
