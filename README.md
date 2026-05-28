@@ -1,8 +1,8 @@
 # AstraQPU
 
-A virtual QPU runtime for architecture-aware scheduling, control, and hardware-in-the-loop execution.
+A virtual QPU runtime for architecture aware scheduling, control, and hardware in the loop execution.
 
-AstraQPU prototypes the software architecture around how a quantum processor could be controlled, scheduled, debugged, and virtualized. The project focuses on runtime architecture, native instruction scheduling, hardware constraints, control-plane interaction, execution traces, and telemetry rather than generic circuit simulation.
+AstraQPU prototypes the software architecture around how a quantum processor could be controlled, scheduled, debugged, and virtualized. The project focuses on runtime architecture, native instruction scheduling, hardware constraints, control plane interaction, execution traces, and telemetry rather than generic circuit simulation.
 
 ## Project Shape
 
@@ -54,6 +54,10 @@ The first milestone proves that AstraQPU can:
 ## Status
 
 Early architecture/runtime foundation. The current focus is a narrow but real execution path: QPU architecture spec -> instruction parser -> scheduler -> virtual execution trace.
+
+## Security
+
+Security policy and project guardrails are in [SECURITY.md](SECURITY.md) and [docs/security.md](docs/security.md).
 
 ## Citation
 

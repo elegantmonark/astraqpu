@@ -348,6 +348,38 @@ Dashboard & Planned & Timeline and telemetry viewer later \\
 \bottomrule
 \end{longtable}
 
+\section{Project Security}
+
+The repo now has a basic security setup:
+
+\begin{itemize}[leftmargin=*]
+  \item Apache 2.0 license
+  \item NOTICE file for project credit
+  \item CITATION file for GitHub citation metadata
+  \item SECURITY file for private vulnerability reporting
+  \item CODEOWNERS file pointing project ownership to \texttt{@elegantmonark}
+  \item Dependabot config for Python packages and GitHub Actions
+  \item GitHub Actions CI across Python 3.10, 3.11, and 3.12
+  \item CodeQL workflow for Python code scanning
+  \item pull request template with a small security checklist
+\end{itemize}
+
+This is not meant to slow development down. It is there so that the public repo looks serious and the main branch does not slowly collect avoidable risk.
+
+\begin{longtable}{lll}
+\toprule
+Control & Status & Purpose \\
+\midrule
+SECURITY.md & Added & Gives people a private reporting path \\
+CODEOWNERS & Added & Keeps ownership clear \\
+Dependabot & Added & Watches dependencies and Actions versions \\
+CI & Added & Runs tests and basic CLI checks \\
+CodeQL & Added & Static analysis for Python \\
+Issue templates & Added & Keeps bug reports usable \\
+PR template & Added & Adds a quick safety check before merge \\
+\bottomrule
+\end{longtable}
+
 \section{Next Milestones}
 
 \subsection{v0.2 Hardware-in-the-Loop Completion}
