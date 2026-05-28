@@ -1,0 +1,35 @@
+{
+  "format": "astraqpu.trace.v0",
+  "architecture": "tiny_3q_superconducting_mock",
+  "backend": "akasha.virtual",
+  "events": [
+    {
+      "t_ns": 0,
+      "event": "instruction_start",
+      "instruction_id": 1,
+      "op": "prep",
+      "qubits": ["q0"],
+      "bits": []
+    },
+    {
+      "t_ns": 20,
+      "event": "instruction_end",
+      "instruction_id": 1,
+      "op": "prep",
+      "qubits": ["q0"],
+      "bits": []
+    },
+    {
+      "t_ns": 20,
+      "event": "instruction_start",
+      "instruction_id": 3,
+      "op": "gate",
+      "qubits": ["q0"],
+      "bits": [],
+      "metadata": {
+        "gate": "h"
+      }
+    }
+  ]
+}
+

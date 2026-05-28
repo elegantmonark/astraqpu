@@ -42,3 +42,22 @@ class ExecutionTrace:
             "events": [event.to_dict() for event in self.events],
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ExecutionTrace":
+        return cls(
+            architecture=str(data["architecture"]),
+            backend=str(data["backend"]),
+            events=tuple(_event_from_dict(event) for event in data.get("events", ())),
+        )
+
+
+def _event_from_dict(data: dict[str, Any]) -> TraceEvent:
+    return TraceEvent(
+        t_ns=int(data["t_ns"]),
+        event=str(data["event"]),
+        instruction_id=int(data["instruction_id"]),
+        op=str(data["op"]),
+        qubits=tuple(data.get("qubits", ())),
+        bits=tuple(data.get("bits", ())),
+        metadata=data.get("metadata"),
+    )

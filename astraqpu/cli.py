@@ -10,6 +10,7 @@ from astraqpu.backends import SerialMCUBackend, VirtualBackend
 from astraqpu.errors import AstraQPUError
 from astraqpu.frontend import parse_sutra_file
 from astraqpu.protocol import SerialProtocol
+from astraqpu.runtime.compare import compare_traces, load_trace
 from astraqpu.scheduler import schedule_program
 
 
@@ -39,6 +40,19 @@ def main(argv: list[str] | None = None) -> int:
     serial_dump.add_argument("program")
     serial_dump.add_argument("--arch", required=True)
     serial_dump.add_argument("--job-id", default="job_001")
+
+    trace_compare = subparsers.add_parser("trace-compare", help="compare expected and observed execution traces")
+    trace_compare.add_argument("--expected", help="expected astraqpu.trace.v0 JSON file")
+    trace_compare.add_argument("--observed", help="observed astraqpu.trace.v0 JSON file")
+    trace_compare.add_argument("--program", help="program to compile into an expected virtual trace")
+    trace_compare.add_argument("--arch", help="architecture spec for --program")
+    trace_compare.add_argument("--backend", choices=("file", "serial"), default="file")
+    trace_compare.add_argument("--port", help="serial port for --backend serial")
+    trace_compare.add_argument("--baudrate", type=int, default=115200)
+    trace_compare.add_argument("--timeout", type=float, default=10.0)
+    trace_compare.add_argument("--job-id", default="job_001")
+    trace_compare.add_argument("--tolerance-ns", type=int, default=0)
+    trace_compare.add_argument("--out")
 
     args = parser.parse_args(argv)
 
@@ -74,6 +88,12 @@ def main(argv: list[str] | None = None) -> int:
             for line in SerialProtocol(job_id=args.job_id).host_lines(scheduled):
                 print(line.decode("utf-8"), end="")
             return 0
+
+        if args.command == "trace-compare":
+            expected, observed = _trace_pair(args)
+            report = compare_traces(expected, observed, tolerance_ns=args.tolerance_ns)
+            _emit_json(report.to_dict(), args.out)
+            return 0
     except AstraQPUError as exc:
         print(f"astraqpu: error: {exc}", file=sys.stderr)
         return 2
@@ -85,6 +105,33 @@ def _compile(program_path: str, arch_path: str):
     arch = load_architecture(arch_path)
     program = parse_sutra_file(program_path)
     return schedule_program(program, arch)
+
+
+def _trace_pair(args):
+    if args.expected and args.observed:
+        return load_trace(args.expected), load_trace(args.observed)
+
+    if not args.program or not args.arch:
+        raise AstraQPUError("trace-compare requires either --expected and --observed, or --program and --arch")
+
+    scheduled = _compile(args.program, args.arch)
+    expected = VirtualBackend().run(scheduled)
+
+    if args.backend == "file":
+        if not args.observed:
+            raise AstraQPUError("trace-compare --backend file requires --observed")
+        observed = load_trace(args.observed)
+        return expected, observed
+
+    if not args.port:
+        raise AstraQPUError("trace-compare --backend serial requires --port")
+    observed = SerialMCUBackend(
+        port=args.port,
+        baudrate=args.baudrate,
+        timeout_s=args.timeout,
+        job_id=args.job_id,
+    ).run(scheduled)
+    return expected, observed
 
 
 def _emit_json(data: dict, out: str | None) -> None:

@@ -37,6 +37,12 @@ Run against a board:
 python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend serial --port COM5
 ```
 
+Compare the board reported trace against the expected runtime trace:
+
+```bash
+python -m astraqpu.cli trace-compare --program examples/bell.aqis --arch examples/arch/tiny_3q.json --backend serial --port COM5 --tolerance-ns 1000
+```
+
 The serial backend requires `pyserial`:
 
 ```bash

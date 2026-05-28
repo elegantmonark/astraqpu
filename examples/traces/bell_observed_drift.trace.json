@@ -1,0 +1,41 @@
+{
+  "format": "astraqpu.trace.v0",
+  "architecture": "tiny_3q_superconducting_mock",
+  "backend": "yantra.serial",
+  "events": [
+    {
+      "t_ns": 100,
+      "event": "instruction_start",
+      "instruction_id": 1,
+      "op": "prep",
+      "qubits": ["q0"],
+      "bits": [],
+      "metadata": {
+        "source": "mcu"
+      }
+    },
+    {
+      "t_ns": 1020,
+      "event": "instruction_end",
+      "instruction_id": 1,
+      "op": "prep",
+      "qubits": ["q0"],
+      "bits": [],
+      "metadata": {
+        "source": "mcu"
+      }
+    },
+    {
+      "t_ns": 5000,
+      "event": "instruction_start",
+      "instruction_id": 99,
+      "op": "device",
+      "qubits": [],
+      "bits": [],
+      "metadata": {
+        "source": "mcu"
+      }
+    }
+  ]
+}
+
