@@ -54,3 +54,17 @@ The first milestone proves that AstraQPU can:
 ## Status
 
 Early architecture/runtime foundation. The current focus is a narrow but real execution path: QPU architecture spec -> instruction parser -> scheduler -> virtual execution trace.
+
+## Citation
+
+If AstraQPU helps your work, please cite it:
+
+```text
+Trishan Biswas. AstraQPU: A virtual QPU runtime for architecture aware scheduling, control, and hardware in the loop execution. 2026. https://github.com/elegantmonark/astraqpu
+```
+
+## License
+
+Apache License 2.0.
+
+Copyright 2026 Trishan Biswas / elegantmonark.

@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use AstraQPU, please cite it as below."
+title: "AstraQPU"
+authors:
+  - family-names: "Biswas"
+    given-names: "Trishan"
+    alias: "elegantmonark"
+year: 2026
+license: "Apache-2.0"
+repository-code: "https://github.com/elegantmonark/astraqpu"
+abstract: "A virtual QPU runtime for architecture aware scheduling, control, and hardware in the loop execution."
