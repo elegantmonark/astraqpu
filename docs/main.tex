@@ -272,7 +272,25 @@ The Arduino firmware now implements a dependency-free protocol emulator. It acce
   \item \texttt{RUN}
 \end{itemize}
 
-It stores a fixed-size instruction buffer, emits ACK/NACK responses, emits timing events, and returns RESULT and DONE messages.
+It stores a fixed size instruction buffer, emits ACK/NACK responses, emits timing events, and returns RESULT and DONE messages.
+
+\subsection{Step 8: Calibration Register Writes}
+
+Register writes now move through the same path as the rest of the program. This matters because calibration should not sit outside the runtime as loose notes. The host can schedule a register update, the serial stream carries it, and the board stores it before the rest of the job runs.
+
+\begin{lstlisting}[style=astra]
+SET_REG q0.drive_amp 0.42
+SET_REG q1.drive_amp 0.39
+SET_REG readout.latency_scale 1.00
+\end{lstlisting}
+
+On the wire, that becomes:
+
+\begin{lstlisting}[style=astra]
+{"type":"INST","proto":"astraqpu.serial.v0","job_id":"bell_001","id":1,"t_ns":0,"op":"set_reg","register":"q0.drive_amp","value":"0.42","duration_ns":0,"latency_ns":0}
+\end{lstlisting}
+
+The Arduino control unit stores the value in a small register table and emits a \texttt{register\_set} event. This is the first version of the calibration path.
 
 \section{Command-Line Interface}
 
@@ -365,4 +383,3 @@ Dashboard & Planned & Timeline and telemetry viewer later \\
 AstraQPU has been initialized as a serious quantum systems infrastructure project. The current codebase already demonstrates the core identity of the project: a QPU program can be parsed, checked against a hardware-inspired architecture, scheduled under timing and topology constraints, executed virtually, converted into a serial control stream, and prepared for physical microcontroller-backed execution.
 
 \end{document}
-

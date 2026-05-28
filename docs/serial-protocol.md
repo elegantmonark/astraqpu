@@ -8,6 +8,7 @@ The first hardware-in-the-loop backend will use JSON Lines over serial. This kee
 {"type":"HELLO","proto":"astraqpu.serial.v0"}
 {"type":"LOAD","proto":"astraqpu.serial.v0","job_id":"bell_001","architecture":"tiny_3q_superconducting_mock","tick_ns":10,"instruction_count":4}
 {"type":"INST","proto":"astraqpu.serial.v0","job_id":"bell_001","id":1,"t_ns":0,"op":"gate","gate":"h","qubits":["q0"],"duration_ns":40,"latency_ns":0,"channels":["drive:q0"]}
+{"type":"INST","proto":"astraqpu.serial.v0","job_id":"bell_001","id":2,"t_ns":0,"op":"set_reg","register":"q0.drive_amp","value":"0.42","duration_ns":0,"latency_ns":0}
 {"type":"RUN","job_id":"bell_001"}
 ```
 
@@ -18,6 +19,7 @@ The first hardware-in-the-loop backend will use JSON Lines over serial. This kee
 {"type":"ACK","job_id":"bell_001"}
 {"type":"EVT","job_id":"bell_001","t_us":1020,"event":"instruction_start","id":1}
 {"type":"EVT","job_id":"bell_001","t_us":1060,"event":"instruction_end","id":1}
+{"type":"EVT","job_id":"bell_001","event":"register_set","id":2,"op":"set_reg","register":"q0.drive_amp","value":"0.42","t_ns":0}
 {"type":"RESULT","job_id":"bell_001","bits":{"c0":1,"c1":1}}
 ```
 

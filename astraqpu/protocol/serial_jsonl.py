@@ -59,6 +59,10 @@ class SerialProtocol:
         for instruction in program.instructions:
             message = {"type": "INST", "proto": PROTOCOL, "job_id": self.job_id}
             message.update(instruction.to_dict())
+            if instruction.op == "set_reg":
+                metadata = message.pop("metadata", {})
+                message["register"] = metadata.get("name")
+                message["value"] = str(metadata.get("value", ""))
             messages.append(message)
         messages.append({"type": "RUN", "proto": PROTOCOL, "job_id": self.job_id})
         return messages
@@ -101,7 +105,7 @@ class SerialProtocol:
                     op=str(payload.get("op", "device")),
                     qubits=tuple(payload.get("qubits", ())),
                     bits=tuple(payload.get("bits", ())),
-                    metadata={"source": "mcu"},
+                    metadata=_event_metadata(payload),
                 )
             )
         return ExecutionTrace(architecture=architecture, backend="yantra.serial", events=tuple(trace_events))
@@ -153,3 +157,11 @@ def _event_time_ns(payload: dict[str, Any]) -> int:
     if "t_us" in payload:
         return int(payload["t_us"]) * 1000
     return 0
+
+
+def _event_metadata(payload: dict[str, Any]) -> dict[str, Any]:
+    metadata: dict[str, Any] = {"source": "mcu"}
+    for key in ("register", "value", "flag", "severity"):
+        if key in payload:
+            metadata[key] = payload[key]
+    return metadata

@@ -4,11 +4,21 @@ struct Instruction {
   unsigned long duration_ns;
   unsigned long latency_ns;
   char op[16];
+  char reg[32];
+  char value[32];
+};
+
+struct RegisterValue {
+  char name[32];
+  char value[32];
 };
 
 const int MAX_INSTRUCTIONS = 64;
+const int MAX_REGISTERS = 24;
 Instruction instructions[MAX_INSTRUCTIONS];
+RegisterValue registers[MAX_REGISTERS];
 int instruction_count = 0;
+int register_count = 0;
 char job_id[32] = "job_001";
 
 void setup() {
@@ -40,6 +50,7 @@ void handle_line(const String &line) {
 
   if (type == "LOAD") {
     instruction_count = 0;
+    register_count = 0;
     copy_string(json_string(line, "job_id"), job_id, sizeof(job_id));
     ack("LOAD");
     return;
@@ -57,6 +68,8 @@ void handle_line(const String &line) {
     instruction.duration_ns = json_ulong(line, "duration_ns");
     instruction.latency_ns = json_ulong(line, "latency_ns");
     copy_string(json_string(line, "op"), instruction.op, sizeof(instruction.op));
+    copy_string(json_string(line, "register"), instruction.reg, sizeof(instruction.reg));
+    copy_string(json_string(line, "value"), instruction.value, sizeof(instruction.value));
     ack("INST");
     return;
   }
@@ -79,6 +92,12 @@ void run_job() {
       delay_ns(instruction.t_ns - previous_ns);
     }
 
+    if (same_text(instruction.op, "set_reg")) {
+      set_register(instruction.reg, instruction.value);
+      register_event(instruction);
+      continue;
+    }
+
     event("instruction_start", instruction, instruction.t_ns);
     delay_ns(instruction.duration_ns);
     event("instruction_end", instruction, instruction.t_ns + instruction.duration_ns);
@@ -97,6 +116,24 @@ void run_job() {
   Serial.print("{\"type\":\"DONE\",\"job_id\":\"");
   Serial.print(job_id);
   Serial.println("\"}");
+}
+
+void set_register(const char *name, const char *value) {
+  for (int i = 0; i < register_count; i++) {
+    if (same_text(registers[i].name, name)) {
+      copy_c_string(value, registers[i].value, sizeof(registers[i].value));
+      return;
+    }
+  }
+
+  if (register_count >= MAX_REGISTERS) {
+    nack("register_table_full");
+    return;
+  }
+
+  copy_c_string(name, registers[register_count].name, sizeof(registers[register_count].name));
+  copy_c_string(value, registers[register_count].value, sizeof(registers[register_count].value));
+  register_count++;
 }
 
 void delay_ns(unsigned long ns) {
@@ -143,6 +180,20 @@ void event(const char *event_name, const Instruction &instruction, unsigned long
   Serial.println("}");
 }
 
+void register_event(const Instruction &instruction) {
+  Serial.print("{\"type\":\"EVT\",\"job_id\":\"");
+  Serial.print(job_id);
+  Serial.print("\",\"event\":\"register_set\",\"id\":");
+  Serial.print(instruction.id);
+  Serial.print(",\"op\":\"set_reg\",\"register\":\"");
+  Serial.print(instruction.reg);
+  Serial.print("\",\"value\":\"");
+  Serial.print(instruction.value);
+  Serial.print("\",\"t_ns\":");
+  Serial.print(instruction.t_ns);
+  Serial.println("}");
+}
+
 String json_string(const String &line, const char *key) {
   String pattern = String("\"") + key + "\":\"";
   int start = line.indexOf(pattern);
@@ -178,4 +229,13 @@ unsigned long json_ulong(const String &line, const char *key) {
 void copy_string(const String &value, char *target, size_t target_size) {
   value.toCharArray(target, target_size);
   target[target_size - 1] = '\0';
+}
+
+void copy_c_string(const char *value, char *target, size_t target_size) {
+  strncpy(target, value, target_size);
+  target[target_size - 1] = '\0';
+}
+
+bool same_text(const char *left, const char *right) {
+  return strcmp(left, right) == 0;
 }

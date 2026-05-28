@@ -40,6 +40,20 @@ class SutraParserTests(unittest.TestCase):
 
         self.assertEqual(program.instructions[0].duration_ns, 3000)
 
+    def test_set_reg_parses_register_name_and_value(self):
+        program = parse_sutra(
+            """
+            DECLARE_QUBITS 1
+            DECLARE_BITS 1
+            SET_REG q0.drive_amp 0.42
+            END
+            """
+        )
+
+        self.assertEqual(program.instructions[0].op, "set_reg")
+        self.assertEqual(program.instructions[0].name, "q0.drive_amp")
+        self.assertEqual(program.instructions[0].value, "0.42")
+
 
 if __name__ == "__main__":
     unittest.main()

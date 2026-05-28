@@ -69,7 +69,36 @@ class SerialProtocolTests(unittest.TestCase):
         self.assertEqual(len(trace.events), 2)
         self.assertEqual(trace.events[1].t_ns, 20)
 
+    def test_set_reg_is_flattened_for_the_mcu(self):
+        arch = load_architecture(ROOT / "examples" / "arch" / "tiny_3q.json")
+        program = parse_sutra_file(ROOT / "examples" / "calibration_pulse.aqis")
+        scheduled = schedule_program(program, arch)
+
+        messages = SerialProtocol(job_id="cal_001").host_messages(scheduled)
+        set_reg = next(message for message in messages if message.get("op") == "set_reg")
+
+        self.assertEqual(set_reg["register"], "q0.drive_amp")
+        self.assertEqual(set_reg["value"], "0.42")
+
+    def test_register_events_keep_register_metadata(self):
+        event = SerialProtocol(job_id="cal_001").parse_device_message(
+            {
+                "type": "EVT",
+                "job_id": "cal_001",
+                "event": "register_set",
+                "id": 1,
+                "op": "set_reg",
+                "register": "q0.drive_amp",
+                "value": "0.42",
+                "t_ns": 0,
+            }
+        )
+
+        trace = SerialProtocol(job_id="cal_001").trace_from_events("tiny", [event])
+
+        self.assertEqual(trace.events[0].metadata["register"], "q0.drive_amp")
+        self.assertEqual(trace.events[0].metadata["value"], "0.42")
+
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -33,6 +33,18 @@ END
 
 Durations accept `ns`, `us`, or `ms`.
 
+## Register Writes
+
+`SET_REG` writes a control register into the scheduled stream. It is meant for values the control plane should see, such as drive amplitudes, readout settings, timing knobs, or fault flags.
+
+```text
+SET_REG q0.drive_amp 0.42
+SET_REG q1.drive_amp 0.39
+SET_REG readout.latency_scale 1.00
+```
+
+The serial backend sends these as normal instructions with `op` set to `set_reg`, plus a `register` and `value` field.
+
 ## Scheduled Form
 
 The compiler lowers Sutra into a scheduled JSON stream:
@@ -53,4 +65,3 @@ The compiler lowers Sutra into a scheduled JSON stream:
   ]
 }
 ```
-

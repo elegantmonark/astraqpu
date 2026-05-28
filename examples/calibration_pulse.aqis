@@ -1,0 +1,15 @@
+# Register updates are part of the control stream, not comments beside it.
+DECLARE_QUBITS 2
+DECLARE_BITS 2
+
+SET_REG q0.drive_amp 0.42
+SET_REG q1.drive_amp 0.39
+SET_REG readout.latency_scale 1.00
+PREP q0
+PREP q1
+GATE H q0
+GATE CX q0 q1
+MEASURE q0 -> c0
+MEASURE q1 -> c1
+END
+

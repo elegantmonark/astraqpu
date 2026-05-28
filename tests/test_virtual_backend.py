@@ -23,6 +23,17 @@ class VirtualBackendTests(unittest.TestCase):
         self.assertEqual(data["backend"], "akasha.virtual")
         self.assertTrue(any(event["event"] == "latency_complete" for event in data["events"]))
 
+    def test_zero_duration_register_trace_starts_before_it_ends(self):
+        arch = load_architecture(ROOT / "examples" / "arch" / "tiny_3q.json")
+        program = parse_sutra_file(ROOT / "examples" / "calibration_pulse.aqis")
+        scheduled = schedule_program(program, arch)
+
+        trace = VirtualBackend().run(scheduled)
+        first_two = [event.event for event in trace.events[:2]]
+
+        self.assertEqual(first_two, ["instruction_start", "instruction_end"])
+        self.assertEqual(trace.events[0].metadata["name"], "q0.drive_amp")
+
 
 if __name__ == "__main__":
     unittest.main()

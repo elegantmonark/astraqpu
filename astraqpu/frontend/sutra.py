@@ -62,7 +62,7 @@ def parse_sutra(text: str, source: str = "<memory>") -> Program:
             elif keyword == "SET_REG":
                 if len(parts) < 3:
                     raise ParseError(f"{source}:{line_no}: SET_REG requires a register name and value")
-                program.instructions.append(Instruction("set_reg", name=parts[1], value=" ".join(parts[2:]), line=line_no))
+                program.instructions.append(Instruction("set_reg", name=_register(parts[1], line_no, source), value=" ".join(parts[2:]), line=line_no))
             elif keyword == "END":
                 _expect_len(parts, 1, line_no, source)
                 break
@@ -126,3 +126,8 @@ def _bit(token: str, line_no: int, source: str) -> str:
         raise ParseError(f"{source}:{line_no}: invalid bit name {token!r}")
     return token
 
+
+def _register(token: str, line_no: int, source: str) -> str:
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_.:]*$", token):
+        raise ParseError(f"{source}:{line_no}: invalid register name {token!r}")
+    return token
