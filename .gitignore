@@ -10,4 +10,4 @@ dist/
 *.egg-info/
 *.log
 .DS_Store
-
+private/
