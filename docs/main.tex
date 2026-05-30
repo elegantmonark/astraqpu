@@ -314,6 +314,10 @@ python -m astraqpu.cli trace-compare --program examples/bell.aqis --arch example
 
 The report marks events as \texttt{ok}, \texttt{late}, or \texttt{early}, and also reports missing or unexpected events. This is the first debugging feature that makes the physical control unit useful as more than a serial receiver.
 
+\subsection{Step 10: Serial Protocol Limits}
+
+The serial protocol now has central limits for line length, job size, register names, register values, and device trace event volume. The first line length limit is 4096 bytes. These limits keep malformed or broken board output from becoming unbounded host input.
+
 \section{Command-Line Interface}
 
 The current CLI entry point is:

@@ -51,6 +51,21 @@ The serial backend requires `pyserial`:
 python -m pip install pyserial
 ```
 
+## Protocol Limits
+
+The host runtime keeps the first protocol limits small on purpose:
+
+```text
+max JSON line size: 4096 bytes
+max instructions per job: 256
+max job id length: 48 characters
+max register name length: 48 characters
+max register value length: 96 characters
+max trace events collected from a device: 4096
+```
+
+These limits are there so a bad serial line or broken board firmware cannot make the host accept unbounded input.
+
 ## Future Binary Frame
 
 ```text

@@ -2,8 +2,10 @@ import unittest
 from pathlib import Path
 
 from astraqpu.arch import load_architecture
+from astraqpu.errors import AstraQPUError
 from astraqpu.frontend import parse_sutra_file
 from astraqpu.protocol import SerialProtocol, decode_json_line
+from astraqpu.protocol.limits import MAX_JSON_LINE_BYTES
 from astraqpu.protocol.serial_jsonl import PROTOCOL, SerialSession
 from astraqpu.scheduler import schedule_program
 
@@ -50,6 +52,18 @@ class SerialProtocolTests(unittest.TestCase):
 
         self.assertEqual(message["type"], "HELLO")
         self.assertEqual(message["proto"], PROTOCOL)
+
+    def test_decode_rejects_oversized_bytes_line(self):
+        line = b"{" + b'"x":' + b'"' + (b"a" * MAX_JSON_LINE_BYTES) + b'"}'
+
+        with self.assertRaises(AstraQPUError):
+            decode_json_line(line)
+
+    def test_decode_rejects_oversized_text_line(self):
+        line = '{"x":"' + ("a" * MAX_JSON_LINE_BYTES) + '"}'
+
+        with self.assertRaises(AstraQPUError):
+            decode_json_line(line)
 
     def test_serial_session_builds_trace_from_device_events(self):
         scheduled = self.scheduled_bell()

@@ -6,11 +6,9 @@ import json
 import time
 
 from astraqpu.errors import AstraQPUError
+from astraqpu.protocol.limits import MAX_JSON_LINE_BYTES, PROTOCOL
 from astraqpu.runtime import ExecutionTrace, TraceEvent
 from astraqpu.scheduler import ScheduledProgram
-
-
-PROTOCOL = "astraqpu.serial.v0"
 
 
 @dataclass(frozen=True)
@@ -24,8 +22,12 @@ def encode_json_line(message: dict[str, Any]) -> bytes:
 
 
 def decode_json_line(line: bytes | str) -> dict[str, Any]:
+    if isinstance(line, bytes) and len(line) > MAX_JSON_LINE_BYTES:
+        raise AstraQPUError(f"received serial line longer than {MAX_JSON_LINE_BYTES} bytes")
     if isinstance(line, bytes):
         line = line.decode("utf-8")
+    if len(line.encode("utf-8")) > MAX_JSON_LINE_BYTES:
+        raise AstraQPUError(f"received serial line longer than {MAX_JSON_LINE_BYTES} bytes")
     line = line.strip()
     if not line:
         raise AstraQPUError("received empty serial line")

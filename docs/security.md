@@ -53,6 +53,8 @@ Every runtime feature should have at least one test.
 
 Every new input format should have bad input tests.
 
+Serial protocol limits live in `astraqpu/protocol/limits.py`. Keep those limits small until the protocol has a binary frame with checksums.
+
 Every firmware protocol change should update:
 
 - `docs/serial-protocol.md`
@@ -69,4 +71,3 @@ Do not tag a release until:
 - `SECURITY.md` is current
 - the report in `docs/main.tex` mentions the release state
 - the GitHub repo has branch protection turned on
-
