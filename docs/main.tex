@@ -318,6 +318,10 @@ The report marks events as \texttt{ok}, \texttt{late}, or \texttt{early}, and al
 
 The serial protocol now has central limits for line length, job size, register names, register values, and device trace event volume. The first line length limit is 4096 bytes. These limits keep malformed or broken board output from becoming unbounded host input.
 
+\subsection{Step 11: Device Message Validation}
+
+Device messages are now checked before they become runtime events. A device \texttt{EVT} message must include \texttt{job\_id}, \texttt{event}, \texttt{id}, \texttt{op}, and a timestamp field. A \texttt{RESULT} message must include a JSON object for \texttt{bits}. This makes serial input less trusting and gives clearer failures when firmware output is broken.
+
 \section{Command-Line Interface}
 
 The current CLI entry point is:

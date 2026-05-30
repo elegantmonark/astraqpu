@@ -113,6 +113,26 @@ class SerialProtocolTests(unittest.TestCase):
         self.assertEqual(trace.events[0].metadata["register"], "q0.drive_amp")
         self.assertEqual(trace.events[0].metadata["value"], "0.42")
 
+    def test_device_hello_requires_device_name(self):
+        with self.assertRaises(AstraQPUError):
+            SerialProtocol().parse_device_message({"type": "HELLO", "proto": PROTOCOL})
+
+    def test_device_evt_requires_time(self):
+        with self.assertRaises(AstraQPUError):
+            SerialProtocol().parse_device_message(
+                {
+                    "type": "EVT",
+                    "job_id": "bell_001",
+                    "event": "instruction_start",
+                    "id": 1,
+                    "op": "prep",
+                }
+            )
+
+    def test_device_result_bits_must_be_object(self):
+        with self.assertRaises(AstraQPUError):
+            SerialProtocol().parse_device_message({"type": "RESULT", "job_id": "bell_001", "bits": []})
+
 
 if __name__ == "__main__":
     unittest.main()

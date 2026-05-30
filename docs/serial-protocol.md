@@ -66,6 +66,8 @@ max trace events collected from a device: 4096
 
 These limits are there so a bad serial line or broken board firmware cannot make the host accept unbounded input.
 
+Device messages are schema checked before they become trace events. For example, `EVT` must include `job_id`, `event`, `id`, `op`, and either `t_ns` or `t_us`. `RESULT` must include a `bits` object.
+
 ## Future Binary Frame
 
 ```text

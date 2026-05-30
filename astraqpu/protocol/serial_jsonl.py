@@ -6,7 +6,14 @@ import json
 import time
 
 from astraqpu.errors import AstraQPUError
-from astraqpu.protocol.limits import MAX_JSON_LINE_BYTES, PROTOCOL
+from astraqpu.protocol.limits import (
+    MAX_DEVICE_EVENT_NAME_CHARS,
+    MAX_DEVICE_OP_CHARS,
+    MAX_JSON_LINE_BYTES,
+    MAX_JOB_ID_CHARS,
+    MAX_TRACE_EVENTS,
+    PROTOCOL,
+)
 from astraqpu.runtime import ExecutionTrace, TraceEvent
 from astraqpu.scheduler import ScheduledProgram
 
@@ -75,20 +82,40 @@ class SerialProtocol:
     def parse_device_message(self, message: dict[str, Any]) -> SerialEvent:
         message_type = str(message.get("type", "")).upper()
         if message_type == "HELLO":
+            _require_fields(message, ("proto", "device"))
             if message.get("proto") != PROTOCOL:
                 raise AstraQPUError(f"device protocol mismatch: expected {PROTOCOL}, got {message.get('proto')!r}")
             return SerialEvent("hello", message)
         if message_type == "ACK":
+            _require_fields(message, ("job_id",))
+            _check_text(message, "job_id", MAX_JOB_ID_CHARS)
             return SerialEvent("ack", message)
         if message_type == "NACK":
+            _require_fields(message, ("job_id", "reason"))
+            _check_text(message, "job_id", MAX_JOB_ID_CHARS)
             raise AstraQPUError(f"device rejected command: {message}")
         if message_type == "EVT":
+            _require_fields(message, ("job_id", "event", "id", "op"))
+            _check_text(message, "job_id", MAX_JOB_ID_CHARS)
+            _check_text(message, "event", MAX_DEVICE_EVENT_NAME_CHARS)
+            _check_text(message, "op", MAX_DEVICE_OP_CHARS)
+            _check_int(message, "id")
+            if "t_ns" not in message and "t_us" not in message:
+                raise AstraQPUError("device EVT message requires t_ns or t_us")
             return SerialEvent("event", message)
         if message_type == "RESULT":
+            _require_fields(message, ("job_id", "bits"))
+            _check_text(message, "job_id", MAX_JOB_ID_CHARS)
+            if not isinstance(message["bits"], dict):
+                raise AstraQPUError("device RESULT bits must be a JSON object")
             return SerialEvent("result", message)
         if message_type == "DONE":
+            _require_fields(message, ("job_id",))
+            _check_text(message, "job_id", MAX_JOB_ID_CHARS)
             return SerialEvent("done", message)
         if message_type == "TELEM":
+            _require_fields(message, ("job_id",))
+            _check_text(message, "job_id", MAX_JOB_ID_CHARS)
             return SerialEvent("telemetry", message)
         raise AstraQPUError(f"unknown device serial message type: {message_type!r}")
 
@@ -97,6 +124,8 @@ class SerialProtocol:
         for event in events:
             if event.kind != "event":
                 continue
+            if len(trace_events) >= MAX_TRACE_EVENTS:
+                raise AstraQPUError(f"device emitted more than {MAX_TRACE_EVENTS} trace events")
             payload = event.payload
             t_ns = _event_time_ns(payload)
             trace_events.append(
@@ -167,3 +196,23 @@ def _event_metadata(payload: dict[str, Any]) -> dict[str, Any]:
         if key in payload:
             metadata[key] = payload[key]
     return metadata
+
+
+def _require_fields(message: dict[str, Any], fields: tuple[str, ...]) -> None:
+    missing = [field for field in fields if field not in message]
+    if missing:
+        raise AstraQPUError(f"device {message.get('type', '<missing type>')} message missing fields: {', '.join(missing)}")
+
+
+def _check_text(message: dict[str, Any], field: str, limit: int) -> None:
+    value = message[field]
+    if not isinstance(value, str):
+        raise AstraQPUError(f"device {message.get('type')} field {field} must be a string")
+    if len(value) > limit:
+        raise AstraQPUError(f"device {message.get('type')} field {field} is longer than {limit} characters")
+
+
+def _check_int(message: dict[str, Any], field: str) -> None:
+    value = message[field]
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise AstraQPUError(f"device {message.get('type')} field {field} must be an integer")
