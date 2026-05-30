@@ -5,9 +5,9 @@ from astraqpu.arch import load_architecture
 from astraqpu.errors import AstraQPUError
 from astraqpu.frontend import parse_sutra_file
 from astraqpu.protocol import SerialProtocol, decode_json_line
-from astraqpu.protocol.limits import MAX_JSON_LINE_BYTES
+from astraqpu.protocol.limits import MAX_INSTRUCTIONS, MAX_JOB_ID_CHARS, MAX_JSON_LINE_BYTES, MAX_REGISTER_NAME_CHARS
 from astraqpu.protocol.serial_jsonl import PROTOCOL, SerialSession
-from astraqpu.scheduler import schedule_program
+from astraqpu.scheduler import ScheduledInstruction, ScheduledProgram, schedule_program
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,6 +45,37 @@ class SerialProtocolTests(unittest.TestCase):
         inst_messages = [message for message in messages if message["type"] == "INST"]
         self.assertEqual(len(inst_messages), 6)
         self.assertEqual(inst_messages[2]["gate"], "h")
+
+    def test_job_id_limit_is_enforced_before_send(self):
+        with self.assertRaises(AstraQPUError):
+            SerialProtocol(job_id="x" * (MAX_JOB_ID_CHARS + 1))
+
+    def test_instruction_count_limit_is_enforced_before_send(self):
+        scheduled = ScheduledProgram(
+            architecture="tiny",
+            tick_ns=10,
+            instructions=tuple(ScheduledInstruction(id=i, t_ns=0, op="wait") for i in range(MAX_INSTRUCTIONS + 1)),
+        )
+
+        with self.assertRaises(AstraQPUError):
+            SerialProtocol().host_messages(scheduled)
+
+    def test_register_name_limit_is_enforced_before_send(self):
+        scheduled = ScheduledProgram(
+            architecture="tiny",
+            tick_ns=10,
+            instructions=(
+                ScheduledInstruction(
+                    id=1,
+                    t_ns=0,
+                    op="set_reg",
+                    metadata={"name": "r" * (MAX_REGISTER_NAME_CHARS + 1), "value": "1"},
+                ),
+            ),
+        )
+
+        with self.assertRaises(AstraQPUError):
+            SerialProtocol().host_messages(scheduled)
 
     def test_json_line_round_trip(self):
         line = SerialProtocol(job_id="bell_001").host_lines(self.scheduled_bell())[0]

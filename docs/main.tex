@@ -322,6 +322,10 @@ The serial protocol now has central limits for line length, job size, register n
 
 Device messages are now checked before they become runtime events. A device \texttt{EVT} message must include \texttt{job\_id}, \texttt{event}, \texttt{id}, \texttt{op}, and a timestamp field. A \texttt{RESULT} message must include a JSON object for \texttt{bits}. This makes serial input less trusting and gives clearer failures when firmware output is broken.
 
+\subsection{Step 12: Host Send Validation}
+
+The host now validates serial jobs before writing them to a board. Job ids, instruction counts, register names, register values, and encoded message sizes are checked against the shared protocol limits. This keeps invalid jobs from reaching the control unit in the first place.
+
 \section{Command-Line Interface}
 
 The current CLI entry point is:

@@ -68,6 +68,8 @@ These limits are there so a bad serial line or broken board firmware cannot make
 
 Device messages are schema checked before they become trace events. For example, `EVT` must include `job_id`, `event`, `id`, `op`, and either `t_ns` or `t_us`. `RESULT` must include a `bits` object.
 
+The host also validates outgoing serial jobs before writing to the transport. Oversized jobs, oversized job ids, oversized register names, and oversized register values are rejected before any line is sent.
+
 ## Future Binary Frame
 
 ```text

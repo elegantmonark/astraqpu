@@ -9,8 +9,11 @@ from astraqpu.errors import AstraQPUError
 from astraqpu.protocol.limits import (
     MAX_DEVICE_EVENT_NAME_CHARS,
     MAX_DEVICE_OP_CHARS,
+    MAX_INSTRUCTIONS,
     MAX_JSON_LINE_BYTES,
     MAX_JOB_ID_CHARS,
+    MAX_REGISTER_NAME_CHARS,
+    MAX_REGISTER_VALUE_CHARS,
     MAX_TRACE_EVENTS,
     PROTOCOL,
 )
@@ -51,9 +54,11 @@ class SerialProtocol:
     """JSON Lines protocol used between the host runtime and MCU control unit."""
 
     def __init__(self, job_id: str = "job_001") -> None:
+        _validate_job_id(job_id)
         self.job_id = job_id
 
     def host_messages(self, program: ScheduledProgram) -> list[dict[str, Any]]:
+        _validate_program_for_serial(program)
         messages: list[dict[str, Any]] = [
             {"type": "HELLO", "proto": PROTOCOL, "host": "astraqpu"},
             {
@@ -72,8 +77,11 @@ class SerialProtocol:
                 metadata = message.pop("metadata", {})
                 message["register"] = metadata.get("name")
                 message["value"] = str(metadata.get("value", ""))
+                _validate_register_write(message)
             messages.append(message)
         messages.append({"type": "RUN", "proto": PROTOCOL, "job_id": self.job_id})
+        for message in messages:
+            _validate_host_message_size(message)
         return messages
 
     def host_lines(self, program: ScheduledProgram) -> list[bytes]:
@@ -216,3 +224,34 @@ def _check_int(message: dict[str, Any], field: str) -> None:
     value = message[field]
     if isinstance(value, bool) or not isinstance(value, int):
         raise AstraQPUError(f"device {message.get('type')} field {field} must be an integer")
+
+
+def _validate_job_id(job_id: str) -> None:
+    if not isinstance(job_id, str) or not job_id:
+        raise AstraQPUError("serial job id must be a non empty string")
+    if len(job_id) > MAX_JOB_ID_CHARS:
+        raise AstraQPUError(f"serial job id is longer than {MAX_JOB_ID_CHARS} characters")
+
+
+def _validate_program_for_serial(program: ScheduledProgram) -> None:
+    if len(program.instructions) > MAX_INSTRUCTIONS:
+        raise AstraQPUError(f"serial jobs cannot exceed {MAX_INSTRUCTIONS} instructions")
+
+
+def _validate_register_write(message: dict[str, Any]) -> None:
+    register = message.get("register")
+    value = message.get("value")
+    if not isinstance(register, str) or not register:
+        raise AstraQPUError("SET_REG serial instruction requires a non empty register name")
+    if len(register) > MAX_REGISTER_NAME_CHARS:
+        raise AstraQPUError(f"SET_REG register name is longer than {MAX_REGISTER_NAME_CHARS} characters")
+    if not isinstance(value, str):
+        raise AstraQPUError("SET_REG serial instruction requires a string value")
+    if len(value) > MAX_REGISTER_VALUE_CHARS:
+        raise AstraQPUError(f"SET_REG value is longer than {MAX_REGISTER_VALUE_CHARS} characters")
+
+
+def _validate_host_message_size(message: dict[str, Any]) -> None:
+    line = encode_json_line(message)
+    if len(line) > MAX_JSON_LINE_BYTES:
+        raise AstraQPUError(f"host serial message {message.get('type')} is longer than {MAX_JSON_LINE_BYTES} bytes")
