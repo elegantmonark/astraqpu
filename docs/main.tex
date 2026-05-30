@@ -300,6 +300,12 @@ Trace compare checks whether the runtime timeline and the control unit timeline 
 python -m astraqpu.cli trace-compare --expected expected.json --observed observed.json --tolerance-ns 1000
 \end{lstlisting}
 
+By default, the command returns a non zero exit code if the traces do not match. For report only mode:
+
+\begin{lstlisting}[style=astra]
+python -m astraqpu.cli trace-compare --expected expected.json --observed observed.json --allow-mismatch
+\end{lstlisting}
+
 For a live board run:
 
 \begin{lstlisting}[style=astra]

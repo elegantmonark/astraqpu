@@ -43,6 +43,8 @@ Compare the board reported trace against the expected runtime trace:
 python -m astraqpu.cli trace-compare --program examples/bell.aqis --arch examples/arch/tiny_3q.json --backend serial --port COM5 --tolerance-ns 1000
 ```
 
+By default, `trace-compare` returns a non zero exit code when traces do not match. Use `--allow-mismatch` when you only want the JSON report.
+
 The serial backend requires `pyserial`:
 
 ```bash

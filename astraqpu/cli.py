@@ -52,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     trace_compare.add_argument("--timeout", type=float, default=10.0)
     trace_compare.add_argument("--job-id", default="job_001")
     trace_compare.add_argument("--tolerance-ns", type=int, default=0)
+    trace_compare.add_argument("--allow-mismatch", action="store_true", help="return success even when the trace comparison fails")
     trace_compare.add_argument("--out")
 
     args = parser.parse_args(argv)
@@ -93,6 +94,8 @@ def main(argv: list[str] | None = None) -> int:
             expected, observed = _trace_pair(args)
             report = compare_traces(expected, observed, tolerance_ns=args.tolerance_ns)
             _emit_json(report.to_dict(), args.out)
+            if report.status != "pass" and not args.allow_mismatch:
+                return 1
             return 0
     except AstraQPUError as exc:
         print(f"astraqpu: error: {exc}", file=sys.stderr)

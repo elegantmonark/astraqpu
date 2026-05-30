@@ -36,7 +36,7 @@ python -m astraqpu.cli compile examples/bell.aqis --arch examples/arch/tiny_3q.j
 python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend virtual
 python -m astraqpu.cli serial-dump examples/bell.aqis --arch examples/arch/tiny_3q.json --job-id bell_001
 python -m astraqpu.cli serial-dump examples/calibration_pulse.aqis --arch examples/arch/tiny_3q.json --job-id cal_001
-python -m astraqpu.cli trace-compare --expected expected.json --observed observed.json --tolerance-ns 1000
+python -m astraqpu.cli trace-compare --expected expected.json --observed observed.json --tolerance-ns 1000 --allow-mismatch
 ```
 
 ## MVP Scope
