@@ -330,6 +330,10 @@ The host now validates serial jobs before writing them to a board. Job ids, inst
 
 The Arduino control unit now has explicit bounds for line length, instruction count, register count, job id length, register name length, and register value length. It also returns clearer \texttt{NACK} reasons such as \texttt{missing\_job\_id}, \texttt{unknown\_op}, and \texttt{register\_value\_too\_long}. This keeps the reference control unit aligned with the host side trust boundary.
 
+\subsection{Step 14: Malformed Input Tests}
+
+Malformed input tests now cover bad Sutra programs, invalid register names, broken architecture JSON, missing architecture gates, non object serial JSON, and invalid trace files. The point is simple: every format AstraQPU accepts should fail clearly when the input is wrong.
+
 \section{Command-Line Interface}
 
 The current CLI entry point is:

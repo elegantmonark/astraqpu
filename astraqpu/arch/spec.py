@@ -57,7 +57,10 @@ def load_architecture(path: str | Path) -> ArchitectureSpec:
     if path.suffix.lower() in {".yaml", ".yml"}:
         data = _load_yaml(raw, path)
     else:
-        data = json.loads(raw)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ArchitectureError(f"{path}: invalid JSON architecture spec") from exc
     return architecture_from_dict(data)
 
 
@@ -110,4 +113,3 @@ def _load_yaml(raw: str, path: Path) -> dict[str, Any]:
     except ImportError as exc:
         raise ArchitectureError(f"{path}: YAML specs require PyYAML; use JSON or install astraqpu[yaml]") from exc
     return yaml.safe_load(raw)
-

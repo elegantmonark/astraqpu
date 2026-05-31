@@ -53,6 +53,8 @@ Every runtime feature should have at least one test.
 
 Every new input format should have bad input tests.
 
+Malformed input tests cover parser failures, bad architecture specs, bad serial JSON, and bad trace files. Add to `tests/test_malformed_inputs.py` when a new input boundary appears.
+
 Serial protocol limits live in `astraqpu/protocol/limits.py`. Keep those limits small until the protocol has a binary frame with checksums.
 
 Every firmware protocol change should update:
