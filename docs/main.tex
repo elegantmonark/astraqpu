@@ -326,6 +326,10 @@ Device messages are now checked before they become runtime events. A device \tex
 
 The host now validates serial jobs before writing them to a board. Job ids, instruction counts, register names, register values, and encoded message sizes are checked against the shared protocol limits. This keeps invalid jobs from reaching the control unit in the first place.
 
+\subsection{Step 13: Firmware Bounds}
+
+The Arduino control unit now has explicit bounds for line length, instruction count, register count, job id length, register name length, and register value length. It also returns clearer \texttt{NACK} reasons such as \texttt{missing\_job\_id}, \texttt{unknown\_op}, and \texttt{register\_value\_too\_long}. This keeps the reference control unit aligned with the host side trust boundary.
+
 \section{Command-Line Interface}
 
 The current CLI entry point is:

@@ -15,6 +15,10 @@ struct RegisterValue {
 
 const int MAX_INSTRUCTIONS = 64;
 const int MAX_REGISTERS = 24;
+const int MAX_LINE_CHARS = 512;
+const int MAX_JOB_ID_CHARS = 31;
+const int MAX_REGISTER_NAME_CHARS = 31;
+const int MAX_REGISTER_VALUE_CHARS = 31;
 Instruction instructions[MAX_INSTRUCTIONS];
 RegisterValue registers[MAX_REGISTERS];
 int instruction_count = 0;
@@ -36,6 +40,10 @@ void loop() {
     if (line.length() == 0) {
       return;
     }
+    if (line.length() > MAX_LINE_CHARS) {
+      nack("line_too_long");
+      return;
+    }
     handle_line(line);
   }
 }
@@ -49,9 +57,28 @@ void handle_line(const String &line) {
   }
 
   if (type == "LOAD") {
+    String incoming_job_id = json_string(line, "job_id");
+    if (!json_has_key(line, "instruction_count")) {
+      nack("missing_instruction_count");
+      return;
+    }
+    int expected_count = json_int(line, "instruction_count");
+    if (incoming_job_id.length() == 0) {
+      nack("missing_job_id");
+      return;
+    }
+    if (incoming_job_id.length() > MAX_JOB_ID_CHARS) {
+      nack("job_id_too_long");
+      return;
+    }
+    if (expected_count < 0 || expected_count > MAX_INSTRUCTIONS) {
+      nack("instruction_count_out_of_range");
+      return;
+    }
+
     instruction_count = 0;
     register_count = 0;
-    copy_string(json_string(line, "job_id"), job_id, sizeof(job_id));
+    copy_string(incoming_job_id, job_id, sizeof(job_id));
     ack("LOAD");
     return;
   }
@@ -62,19 +89,55 @@ void handle_line(const String &line) {
       return;
     }
 
+    String op = json_string(line, "op");
+    if (op.length() == 0) {
+      nack("missing_op");
+      return;
+    }
+    if (!known_op(op)) {
+      nack("unknown_op");
+      return;
+    }
+
+    String reg = json_string(line, "register");
+    String value = json_string(line, "value");
+    if (op == "set_reg") {
+      if (reg.length() == 0) {
+        nack("missing_register");
+        return;
+      }
+      if (reg.length() > MAX_REGISTER_NAME_CHARS) {
+        nack("register_name_too_long");
+        return;
+      }
+      if (value.length() > MAX_REGISTER_VALUE_CHARS) {
+        nack("register_value_too_long");
+        return;
+      }
+    }
+
     Instruction &instruction = instructions[instruction_count++];
     instruction.id = json_int(line, "id");
+    if (instruction.id <= 0) {
+      instruction_count--;
+      nack("invalid_instruction_id");
+      return;
+    }
     instruction.t_ns = json_ulong(line, "t_ns");
     instruction.duration_ns = json_ulong(line, "duration_ns");
     instruction.latency_ns = json_ulong(line, "latency_ns");
-    copy_string(json_string(line, "op"), instruction.op, sizeof(instruction.op));
-    copy_string(json_string(line, "register"), instruction.reg, sizeof(instruction.reg));
-    copy_string(json_string(line, "value"), instruction.value, sizeof(instruction.value));
+    copy_string(op, instruction.op, sizeof(instruction.op));
+    copy_string(reg, instruction.reg, sizeof(instruction.reg));
+    copy_string(value, instruction.value, sizeof(instruction.value));
     ack("INST");
     return;
   }
 
   if (type == "RUN") {
+    if (instruction_count == 0) {
+      nack("no_instructions_loaded");
+      return;
+    }
     ack("RUN");
     run_job();
     return;
@@ -93,8 +156,9 @@ void run_job() {
     }
 
     if (same_text(instruction.op, "set_reg")) {
-      set_register(instruction.reg, instruction.value);
-      register_event(instruction);
+      if (set_register(instruction.reg, instruction.value)) {
+        register_event(instruction);
+      }
       continue;
     }
 
@@ -118,22 +182,23 @@ void run_job() {
   Serial.println("\"}");
 }
 
-void set_register(const char *name, const char *value) {
+bool set_register(const char *name, const char *value) {
   for (int i = 0; i < register_count; i++) {
     if (same_text(registers[i].name, name)) {
       copy_c_string(value, registers[i].value, sizeof(registers[i].value));
-      return;
+      return true;
     }
   }
 
   if (register_count >= MAX_REGISTERS) {
     nack("register_table_full");
-    return;
+    return false;
   }
 
   copy_c_string(name, registers[register_count].name, sizeof(registers[register_count].name));
   copy_c_string(value, registers[register_count].value, sizeof(registers[register_count].value));
   register_count++;
+  return true;
 }
 
 void delay_ns(unsigned long ns) {
@@ -226,6 +291,11 @@ unsigned long json_ulong(const String &line, const char *key) {
   return line.substring(start, end).toInt();
 }
 
+bool json_has_key(const String &line, const char *key) {
+  String pattern = String("\"") + key + "\":";
+  return line.indexOf(pattern) >= 0;
+}
+
 void copy_string(const String &value, char *target, size_t target_size) {
   value.toCharArray(target, target_size);
   target[target_size - 1] = '\0';
@@ -238,4 +308,13 @@ void copy_c_string(const char *value, char *target, size_t target_size) {
 
 bool same_text(const char *left, const char *right) {
   return strcmp(left, right) == 0;
+}
+
+bool known_op(const String &op) {
+  return op == "prep" ||
+         op == "gate" ||
+         op == "measure" ||
+         op == "wait" ||
+         op == "barrier" ||
+         op == "set_reg";
 }

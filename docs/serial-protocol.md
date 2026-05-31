@@ -70,6 +70,19 @@ Device messages are schema checked before they become trace events. For example,
 
 The host also validates outgoing serial jobs before writing to the transport. Oversized jobs, oversized job ids, oversized register names, and oversized register values are rejected before any line is sent.
 
+The Arduino reference firmware has smaller board side limits because it is intentionally dependency free and memory light:
+
+```text
+max serial line length: 512 characters
+max loaded instructions: 64
+max stored registers: 24
+max board job id length: 31 characters
+max board register name length: 31 characters
+max board register value length: 31 characters
+```
+
+When the firmware rejects a command it sends `NACK` with a specific reason, for example `missing_job_id`, `instruction_buffer_full`, `unknown_op`, or `register_value_too_long`.
+
 ## Future Binary Frame
 
 ```text
