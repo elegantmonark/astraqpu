@@ -92,6 +92,43 @@ class TraceCompareReport:
             "unexpected": [event.to_dict() for event in self.unexpected],
         }
 
+    def to_summary_text(self) -> str:
+        data = self.to_dict()
+        summary = data["summary"]
+        lines = [
+            "AstraQPU trace compare",
+            f"status: {self.status}",
+            f"architecture: {self.architecture}",
+            f"expected backend: {self.expected_backend}",
+            f"observed backend: {self.observed_backend}",
+            f"tolerance ns: {self.tolerance_ns}",
+            "",
+            "summary:",
+            f"  matched: {summary['matched']}",
+            f"  late or early: {summary['late_or_early']}",
+            f"  missing: {summary['missing']}",
+            f"  unexpected: {summary['unexpected']}",
+        ]
+        if self.matches:
+            worst = max(self.matches, key=lambda match: abs(match.drift_ns))
+            lines.extend(
+                [
+                    "",
+                    "worst drift:",
+                    f"  instruction: {worst.instruction_id}",
+                    f"  event: {worst.event}",
+                    f"  drift ns: {worst.drift_ns}",
+                    f"  status: {worst.status}",
+                ]
+            )
+        if self.missing:
+            lines.extend(["", "missing events:"])
+            lines.extend(f"  instruction {event.instruction_id} {event.event} expected at {event.expected_t_ns} ns" for event in self.missing[:5])
+        if self.unexpected:
+            lines.extend(["", "unexpected events:"])
+            lines.extend(f"  instruction {event.instruction_id} {event.event} observed at {event.observed_t_ns} ns" for event in self.unexpected[:5])
+        return "\n".join(lines)
+
 
 def load_trace(path: str | Path) -> ExecutionTrace:
     try:
@@ -179,4 +216,3 @@ def _drift_status(drift_ns: int) -> str:
     if drift_ns > 0:
         return "late"
     return "early"
-

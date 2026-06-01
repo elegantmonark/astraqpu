@@ -45,6 +45,12 @@ python -m astraqpu.cli trace-compare --program examples/bell.aqis --arch example
 
 By default, `trace-compare` returns a non zero exit code when traces do not match. Use `--allow-mismatch` when you only want the JSON report.
 
+For a readable terminal summary:
+
+```bash
+python -m astraqpu.cli trace-compare --expected expected.json --observed observed.json --format summary --allow-mismatch
+```
+
 The serial backend requires `pyserial`:
 
 ```bash

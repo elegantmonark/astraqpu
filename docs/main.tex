@@ -306,6 +306,12 @@ By default, the command returns a non zero exit code if the traces do not match.
 python -m astraqpu.cli trace-compare --expected expected.json --observed observed.json --allow-mismatch
 \end{lstlisting}
 
+For a terminal friendly summary instead of JSON:
+
+\begin{lstlisting}[style=astra]
+python -m astraqpu.cli trace-compare --expected expected.json --observed observed.json --format summary --allow-mismatch
+\end{lstlisting}
+
 For a live board run:
 
 \begin{lstlisting}[style=astra]

@@ -43,6 +43,28 @@ class CliTests(unittest.TestCase):
 
         self.assertEqual(code, 0)
 
+    def test_trace_compare_summary_format_prints_text(self):
+        output = StringIO()
+        with redirect_stdout(output):
+            code = main(
+                [
+                    "trace-compare",
+                    "--expected",
+                    str(ROOT / "examples" / "traces" / "bell_expected.trace.json"),
+                    "--observed",
+                    str(ROOT / "examples" / "traces" / "bell_observed_drift.trace.json"),
+                    "--tolerance-ns",
+                    "100",
+                    "--allow-mismatch",
+                    "--format",
+                    "summary",
+                ]
+            )
+
+        self.assertEqual(code, 0)
+        self.assertIn("AstraQPU trace compare", output.getvalue())
+        self.assertIn("status: fail", output.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
