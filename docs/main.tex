@@ -334,6 +334,14 @@ The Arduino control unit now has explicit bounds for line length, instruction co
 
 Malformed input tests now cover bad Sutra programs, invalid register names, broken architecture JSON, missing architecture gates, non object serial JSON, and invalid trace files. The point is simple: every format AstraQPU accepts should fail clearly when the input is wrong.
 
+\subsection{Step 15: Timeline Summary}
+
+AstraQPU can now export a compact timeline summary from any scheduled program. The summary reports total duration, instruction count, operation counts, channel occupancy, and qubit occupancy. This is useful for debugging the scheduler and is a natural input for a later dashboard.
+
+\begin{lstlisting}[style=astra]
+python -m astraqpu.cli timeline examples/bell.aqis --arch examples/arch/tiny_3q.json
+\end{lstlisting}
+
 \section{Command-Line Interface}
 
 The current CLI entry point is:

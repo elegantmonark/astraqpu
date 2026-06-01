@@ -44,9 +44,10 @@ The scheduler assigns each instruction a start time while respecting:
 
 The scheduler is intentionally timing-first. A valid program is not only logically valid; it must also be executable on the declared architecture.
 
+The runtime can also export a compact timeline summary with channel occupancy, qubit occupancy, operation counts, and total scheduled duration.
+
 ## Backends
 
 The initial backend is **Akasha**, the virtual backend. It produces an execution trace from scheduled instructions.
 
 The next backend is **Yantra Serial**, a microcontroller-backed control plane over serial. The MCU receives scheduled instructions, emulates execution timing, exposes calibration registers, emits telemetry, and returns measurement results.
-

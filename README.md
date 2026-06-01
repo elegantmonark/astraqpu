@@ -33,6 +33,7 @@ From this repository:
 ```bash
 python -m astraqpu.cli validate examples/arch/tiny_3q.json
 python -m astraqpu.cli compile examples/bell.aqis --arch examples/arch/tiny_3q.json --out build/bell.scheduled.json
+python -m astraqpu.cli timeline examples/bell.aqis --arch examples/arch/tiny_3q.json
 python -m astraqpu.cli run examples/bell.aqis --arch examples/arch/tiny_3q.json --backend virtual
 python -m astraqpu.cli serial-dump examples/bell.aqis --arch examples/arch/tiny_3q.json --job-id bell_001
 python -m astraqpu.cli serial-dump examples/calibration_pulse.aqis --arch examples/arch/tiny_3q.json --job-id cal_001

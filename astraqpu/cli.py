@@ -11,7 +11,7 @@ from astraqpu.errors import AstraQPUError
 from astraqpu.frontend import parse_sutra_file
 from astraqpu.protocol import SerialProtocol
 from astraqpu.runtime.compare import compare_traces, load_trace
-from astraqpu.scheduler import schedule_program
+from astraqpu.scheduler import schedule_program, summarize_timeline
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -25,6 +25,11 @@ def main(argv: list[str] | None = None) -> int:
     compile_cmd.add_argument("program")
     compile_cmd.add_argument("--arch", required=True)
     compile_cmd.add_argument("--out")
+
+    timeline = subparsers.add_parser("timeline", help="export a compact scheduled timeline summary")
+    timeline.add_argument("program")
+    timeline.add_argument("--arch", required=True)
+    timeline.add_argument("--out")
 
     run = subparsers.add_parser("run", help="run a Sutra program on a backend")
     run.add_argument("program")
@@ -66,6 +71,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "compile":
             scheduled = _compile(args.program, args.arch)
             _emit_json(scheduled.to_dict(), args.out)
+            return 0
+
+        if args.command == "timeline":
+            scheduled = _compile(args.program, args.arch)
+            _emit_json(summarize_timeline(scheduled).to_dict(), args.out)
             return 0
 
         if args.command == "run":
